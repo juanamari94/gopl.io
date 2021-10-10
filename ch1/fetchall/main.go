@@ -22,8 +22,18 @@ func main() {
 	for _, url := range os.Args[1:] {
 		go fetch(url, ch) // start a goroutine
 	}
+	file, err := os.Create("/tmp/ex1.10")
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create file, err: %v", err)
+		os.Exit(1)
+	}
+
+	defer file.Close()
 	for range os.Args[1:] {
-		fmt.Println(<-ch) // receive from channel ch
+		res := <-ch
+		fmt.Println(res) // receive from channel ch
+		file.WriteString(res + "\n")
 	}
 	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
 }
