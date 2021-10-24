@@ -49,6 +49,12 @@ func BenchmarkPopCount(b *testing.B) {
 	}
 }
 
+func BenchmarkPopCountLoop(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		popcount.PopCountLoop(0x1234567890ABCDEF)
+	}
+}
+
 func BenchmarkBitCount(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		BitCount(0x1234567890ABCDEF)
@@ -82,23 +88,21 @@ func TestPopCount(t *testing.T) {
 	}
 }
 
-// Go 1.6, 2.67GHz Xeon
-// $ go test -cpu=4 -bench=. gopl.io/ch2/popcount
-// BenchmarkPopCount-4                  200000000         6.30 ns/op
-// BenchmarkBitCount-4                  300000000         4.15 ns/op
-// BenchmarkPopCountByClearing-4        30000000         45.2 ns/op
-// BenchmarkPopCountByShifting-4        10000000        153 ns/op
-//
-// Go 1.6, 2.5GHz Intel Core i5
-// $ go test -cpu=4 -bench=. gopl.io/ch2/popcount
-// BenchmarkPopCount-4                  200000000         7.52 ns/op
-// BenchmarkBitCount-4                  500000000         3.36 ns/op
-// BenchmarkPopCountByClearing-4        50000000         34.3 ns/op
-// BenchmarkPopCountByShifting-4        20000000        108 ns/op
-//
-// Go 1.7, 3.5GHz Xeon
-// $ go test -cpu=4 -bench=. gopl.io/ch2/popcount
-// BenchmarkPopCount-12                 2000000000        0.28 ns/op
-// BenchmarkBitCount-12                 2000000000        0.27 ns/op
-// BenchmarkPopCountByClearing-12       100000000        18.5 ns/op
-// BenchmarkPopCountByShifting-12       20000000         70.1 ns/op
+func TestPopCountLoop(t *testing.T) {
+	cases := []popCountPair{{1, 1}, {2, 1}, {3, 2}, {127, 7}, {65535, 16}}
+	for _, testCase := range cases {
+		result := popcount.PopCountLoop(testCase.input)
+		if result != testCase.expected {
+			t.Errorf("Expected %v got %v", testCase.expected, result)
+		}
+	}
+}
+
+// goos: darwin
+// goarch: amd64
+// cpu: Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz
+// BenchmarkPopCount-16                    1000000000               0.2402 ns/op
+// BenchmarkPopCountLoop-16                244007541                4.855 ns/op
+// BenchmarkBitCount-16                    1000000000               0.2408 ns/op
+// BenchmarkPopCountByClearing-16          121914792                9.892 ns/op
+// BenchmarkPopCountByShifting-16          76343859                16.07 ns/op
