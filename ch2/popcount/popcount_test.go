@@ -67,6 +67,21 @@ func BenchmarkPopCountByShifting(b *testing.B) {
 	}
 }
 
+type popCountPair struct {
+	input    uint64
+	expected int
+}
+
+func TestPopCount(t *testing.T) {
+	cases := []popCountPair{{1, 1}, {2, 1}, {3, 2}, {127, 7}, {65535, 16}}
+	for _, testCase := range cases {
+		result := popcount.PopCount(testCase.input)
+		if result != testCase.expected {
+			t.Errorf("Expected %v got %v", testCase.expected, result)
+		}
+	}
+}
+
 // Go 1.6, 2.67GHz Xeon
 // $ go test -cpu=4 -bench=. gopl.io/ch2/popcount
 // BenchmarkPopCount-4                  200000000         6.30 ns/op
