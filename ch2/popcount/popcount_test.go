@@ -55,6 +55,18 @@ func BenchmarkPopCountLoop(b *testing.B) {
 	}
 }
 
+func BenchmarkPopCountShift64(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		popcount.PopCountShift64(0x1234567890ABCDEF)
+	}
+}
+
+func BenchmarkPopCountKernighan(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		popcount.PopCountKernighan(0x1234567890ABCDEF)
+	}
+}
+
 func BenchmarkBitCount(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		BitCount(0x1234567890ABCDEF)
@@ -92,6 +104,26 @@ func TestPopCountLoop(t *testing.T) {
 	cases := []popCountPair{{1, 1}, {2, 1}, {3, 2}, {127, 7}, {65535, 16}}
 	for _, testCase := range cases {
 		result := popcount.PopCountLoop(testCase.input)
+		if result != testCase.expected {
+			t.Errorf("Expected %v got %v", testCase.expected, result)
+		}
+	}
+}
+
+func TestPopCountShift64(t *testing.T) {
+	cases := []popCountPair{{1, 1}, {2, 1}, {3, 2}, {127, 7}, {65535, 16}}
+	for _, testCase := range cases {
+		result := popcount.PopCountShift64(testCase.input)
+		if result != testCase.expected {
+			t.Errorf("Expected %v got %v", testCase.expected, result)
+		}
+	}
+}
+
+func TestPopCountKernighan(t *testing.T) {
+	cases := []popCountPair{{1, 1}, {2, 1}, {3, 2}, {127, 7}, {65535, 16}}
+	for _, testCase := range cases {
+		result := popcount.PopCountKernighan(testCase.input)
 		if result != testCase.expected {
 			t.Errorf("Expected %v got %v", testCase.expected, result)
 		}

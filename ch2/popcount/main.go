@@ -36,4 +36,22 @@ func PopCountLoop(x uint64) int {
 	return popCount
 }
 
+func PopCountShift64(x uint64) int {
+	var popCount int
+	for i := 0; i < 64; i++ {
+		popCount += int(x & 1)
+		x >>= 1
+	}
+	return popCount
+}
+
+func PopCountKernighan(x uint64) int {
+	// you're a brilliant devil Kernighan
+	var popCount int
+	for ; x > 0; x &= x - 1 {
+		popCount += 1
+	}
+	return popCount
+}
+
 //!-
