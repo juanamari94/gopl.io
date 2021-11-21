@@ -8,6 +8,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -29,10 +30,22 @@ func main() {
 		"width='%d' height='%d'>", width, height)
 	for i := 0; i < cells; i++ {
 		for j := 0; j < cells; j++ {
-			ax, ay := corner(i+1, j)
-			bx, by := corner(i, j)
-			cx, cy := corner(i, j+1)
-			dx, dy := corner(i+1, j+1)
+			ax, ay, err := corner(i+1, j)
+			if err != nil {
+				continue
+			}
+			bx, by, err := corner(i, j)
+			if err != nil {
+				continue
+			}
+			cx, cy, err:= corner(i, j+1)
+			if err != nil {
+				continue
+			}
+			dx, dy, err := corner(i+1, j+1)
+			if err != nil {
+				continue
+			}
 			fmt.Printf("<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
 				ax, ay, bx, by, cx, cy, dx, dy)
 		}
@@ -40,7 +53,7 @@ func main() {
 	fmt.Println("</svg>")
 }
 
-func corner(i, j int) (float64, float64) {
+func corner(i, j int) (float64, float64, error) {
 	// Find point (x,y) at corner of cell (i,j).
 	x := xyrange * (float64(i)/cells - 0.5)
 	y := xyrange * (float64(j)/cells - 0.5)
@@ -48,10 +61,14 @@ func corner(i, j int) (float64, float64) {
 	// Compute surface height z.
 	z := f(x, y)
 
+	if math.IsInf(z, 0) {
+		return 0, 0, errors.New("non-finite float64")
+	}
+
 	// Project (x,y,z) isometrically onto 2-D SVG canvas (sx,sy).
 	sx := width/2 + (x-y)*cos30*xyscale
 	sy := height/2 + (x+y)*sin30*xyscale - z*zscale
-	return sx, sy
+	return sx, sy, nil
 }
 
 func f(x, y float64) float64 {
