@@ -9,8 +9,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math"
+	"os"
 )
+
+type SfcFunc = func(float64, float64) float64
 
 const (
 	width, height = 600, 320            // canvas size in pixels
@@ -23,33 +27,33 @@ const (
 
 var sin30, cos30 = math.Sin(angle), math.Cos(angle) // sin(30°), cos(30°)
 
-func main() {
-	fmt.Printf("<svg xmlns='http://www.w3.org/2000/svg' "+
+func svg(writer io.Writer, sfcFunc SfcFunc) {
+	fmt.Fprintf(os.Stdout, "<svg xmlns='http://www.w3.org/2000/svg' "+
 		"style='stroke: grey; fill: white; stroke-width: 0.7' "+
 		"width='%d' height='%d'>", width, height)
 	for i := 0; i < cells; i++ {
 		for j := 0; j < cells; j++ {
-			ax, ay := corner(i+1, j)
-			bx, by := corner(i, j)
-			cx, cy := corner(i, j+1)
-			dx, dy := corner(i+1, j+1)
+			ax, ay := corner(i+1, j, sfcFunc)
+			bx, by := corner(i, j, sfcFunc)
+			cx, cy := corner(i, j+1, sfcFunc)
+			dx, dy := corner(i+1, j+1, sfcFunc)
 			if math.IsNaN(ax) || math.IsNaN(ay) || math.IsNaN(bx) || math.IsNaN(by) || math.IsNaN(cx) || math.IsNaN(cy) || math.IsNaN(dx) || math.IsNaN(dy) {
 				continue
 			}
-			fmt.Printf("<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
+			fmt.Fprintf(os.Stdout, "<polygon points='%g,%g %g,%g %g,%g %g,%g'/>\n",
 				ax, ay, bx, by, cx, cy, dx, dy)
 		}
 	}
-	fmt.Println("</svg>")
+	fmt.Fprintf(os.Stdout, "</svg>")
 }
 
-func corner(i, j int) (float64, float64) {
+func corner(i, j int, sfcFunc SfcFunc) (float64, float64) {
 	// Find point (x,y) at corner of cell (i,j).
 	x := xyrange * (float64(i)/cells - 0.5)
 	y := xyrange * (float64(j)/cells - 0.5)
 
 	// Compute surface height z.
-	z := r(x, y)
+	z := sfcFunc(x, y)
 
 	// Project (x,y,z) isometrically onto 2-D SVG canvas (sx,sy).
 	sx := width/2 + (x-y)*cos30*xyscale
@@ -62,12 +66,30 @@ func f(x, y float64) float64 {
 	return math.Sin(r) / r
 }
 
-func g(x, y float64) float64 {
+func eggs(x, y float64) float64 {
 	return 0.2 * (math.Cos(x) + math.Cos(y))
 }
 
-func r(x, y float64) float64 {
-	return 0.003 * (math.Pow(x, 2) - math.Pow(y, 2))
+func saddle(x, y float64) float64 {
+	return 0.001 * (math.Pow(x, 2) - math.Pow(y, 2))
+}
+
+func main() {
+
+	var sfcFunc SfcFunc
+	if len(os.Args) <= 1 {
+		sfcFunc = f
+	} else {
+		switch os.Args[1] {
+		case "saddle":
+			sfcFunc = saddle
+		case "eggs":
+			sfcFunc = eggs
+		default:
+			sfcFunc = f
+		}
+	}
+	svg(os.Stdout, sfcFunc)
 }
 
 //!-
